@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Security Panel</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+body{
+    margin:0;
+    font-family:'Courier New', monospace;
+    background:#0d0d0d;
+    color:#00ff99;
+}
+header{
+    padding:20px;
+    text-align:center;
+    font-size:2em;
+    border-bottom:1px solid #00ff99
+}
+.panel{
+    max-width:780px;
+    margin:20px auto;
+    padding:25px;
+    border:1px solid #00ff99;
+    border-radius:16px;
+    background:#111;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 0 20px rgba(0,255,153,0.2)
+}
+input{
+    width:100%;
+    height:48px;
+    margin:8px 0;
+    background:#1a1a1a;
+    border:1px solid #00ff99;
+    color:#00ff99;
+    border-radius:10px;
+    font-size:1em;
+    padding:0 12px;
+    transition:0.3s
+}
+input:focus{
+    border-color:#00c6ff;
+    outline:none;
+}
+button{
+    height:44px;
+    margin:8px auto;
+    background:#141414;
+    border:1px solid #00ff99;
+    color:#00ff99;
+    border-radius:10px;
+    font-size:1em;
+    font-weight:bold;
+    letter-spacing:1px;
+    padding:0 16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover{
+    background:#00ff99;
+    color:#000;
+    transform:scale(1.02);
+}
+.result{
+    width:100%;
+    max-width:540px;
+    min-height:120px;
+    margin-top:12px;
+    padding:15px;
+    border:1px dashed #00ff99;
+    white-space:pre-wrap;
+    border-radius:12px;
+    background:#111;
+    box-shadow:inset 0 0 10px rgba(0,255,153,0.2)
+}
+.accuracy{
+    margin-top:8px;
+    font-size:1.15em;
+    font-weight:bold;
+    color:#ff9900;
+    display:flex;
+    align-items:center;
+    width:100%;
+    max-width:540px;
+    gap:10px;
+}
+.accuracy-bar{
+    flex-grow:1;
+    height:22px;
+    border-radius:12px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 0 10px rgba(0,255,153,0.4);
+    transition: width 0.5s ease-in-out, background 0.5s ease-in-out;
+}
+.accuracy-bar span{
+    position:absolute;
+    right:10px;
+    top:0;
+    color:#000;
+    font-weight:bold;
+    font-size:0.9em;
+    line-height:22px;
+}
+#map{
+    height:450px;
+    width:100%;
+    max-width:540px;
+    margin-top:14px;
+    border:1px solid #00ff99;
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(0,255,153,0.2)
+}
+.tg-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:12px 18px;
+    border:1px solid #00c6ff;
+    border-radius:14px;
+    text-decoration:none;
+    color:#00eaff;
+    font-weight:bold;
+    letter-spacing:1px;
+    background:linear-gradient(145deg,#001b22,#000f14);
+    box-shadow:0 0 12px rgba(0,198,255,.35), inset 0 0 12px rgba(0,198,255,.15);
+    animation:tgPulse 1.8s infinite;
+    transition:0.3s
+}
+.tg-btn:hover{background:#00c6ff;color:#000}
+.tg-icon{
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#00c6ff;
+    color:#000;
+    font-size:18px;
+    box-shadow:0 0 12px rgba(0,198,255,.8)
+}
+@keyframes tgPulse{
+    0%{box-shadow:0 0 8px rgba(0,198,255,.4)}
+    50%{box-shadow:0 0 20px rgba(0,198,255,.9)}
+    100%{box-shadow:0 0 8px rgba(0,198,255,.4)}
+}
+/* tambahan glow neon effect */
+.accuracy-bar::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; width:100%; height:100%;
+    box-shadow:0 0 10px rgba(0,255,153,0.8),0 0 20px rgba(0,255,153,0.5);
+    border-radius:12px;
+    pointer-events:none;
+}
+</style>
+</head>
+<body>
+<header>CYBER SECURITY PANEL</header>
+
+<div id="loginWrap" style="position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="width:100%;max-width:420px;border:1px solid #00ff99;border-radius:14px;background:#0f0f0f;padding:25px;box-shadow:0 0 30px rgba(0,255,153,.2)">
+    <h2 style="text-align:center;letter-spacing:2px;margin:0 0 14px">LOGIN ADMIN</h2>
+    <input id="loginUser" placeholder="User ID" />
+    <input id="loginPin" type="password" placeholder="PIN" />
+    <button id="loginBtn">LOGIN</button>
+    <div style="text-align:center;margin-top:14px">
+      <a href="https://t.me/Y6zupchanel69" target="_blank" class="tg-btn">
+        <span class="tg-icon">✈</span>
+        <span class="tg-text">HUBUNGI ADMIN TELEGRAM</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="mainPanel" style="display:none">
+  <button id="logoutBtn" style="align-self:flex-end;max-width:120px;margin-bottom:10px;">LOGOUT</button>
+  <input id="ipInput" placeholder="Masukkan IP Address">
+  <button onclick="checkIP()">SCAN IP</button>
+  <input id="phoneInput" placeholder="Masukkan Nomor HP">
+  <button onclick="validatePhone()">VALIDASI</button>
+  <div class="result" id="result"></div>
+  <div class="accuracy" id="accuracy">AKURASI:<div class="accuracy-bar" id="accuracyBar" style="width:0%"><span>0%</span></div></div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map = L.map('map').setView([0,0],2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+let markers = [];
+
+function typeWriter(text, el, speed=18){
+    el.textContent=''; let i=0;
+    return new Promise(r=>{
+        const t=setInterval(()=>{
+            el.textContent+=text.charAt(i++);
+            if(i>=text.length){clearInterval(t); r();}
+        }, speed);
+    });
+}
+
+const loginWrap=document.getElementById('loginWrap');
+const mainPanel=document.getElementById('mainPanel');
+document.getElementById('loginBtn').addEventListener('click',()=>{
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPin').value.trim();
+  if(u==='AdminJFX1' && p==='159357'){
+    loginWrap.style.display='none'; 
+    mainPanel.style.display='flex'; 
+    getCurrentLocation();
+  } else { alert('User ID atau PIN salah'); }
+});
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  mainPanel.style.display='none'; 
+  loginWrap.style.display='flex';
+  document.getElementById('loginUser').value=''; 
+  document.getElementById('loginPin').value='';
+});
+
+function getCurrentLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      addMarker(pos.coords.latitude,pos.coords.longitude,'Lokasi Anda'); 
+      map.setView([pos.coords.latitude,pos.coords.longitude],6);
+    });
+  }
+}
+
+const carrierMap=[
+  {name:'Telkomsel', prefixes:['0811','0812','0813','0821','0822','0823','0851','0852','0853']},
+  {name:'Indosat (IM3)', prefixes:['0814','0815','0816','0855','0856','0857','0858']},
+  {name:'XL / AXIS', prefixes:['0817','0818','0819','0859','0877','0878']},
+  {name:'Tri (3)', prefixes:['0895','0896','0897','0898','0899']},
+  {name:'Smartfren', prefixes:['0881','0882','0883','0884','0885','0886','0887','0888','0889']}
+];
+function detectCarrier(num){
+  for(const c of carrierMap){
+    for(const p of c.prefixes){
+      if(num.startsWith(p)) return c.name;
+    }
+  } 
+  return 'Tidak diketahui';
+}
+
+// animasi akurasi futuristik
+function animateAccuracyBar(percentage){
+  const bar=document.getElementById('accuracyBar');
+  bar.innerHTML = '<span>0%</span>'; // reset text
+  let w = 0;
+  clearInterval(bar._interval);
+  bar._interval = setInterval(()=>{
+    if(w >= percentage){ clearInterval(bar._interval); w = percentage; }
+    bar.style.width = w+'%';
+    // gradasi warna glow
+    if(w < 50) bar.style.background = `rgb(255,${Math.round(5.1*w)},0)`;
+    else if(w < 80) bar.style.background = `rgb(${Math.round(255-(w-50)*12.75)},255,0)`;
+    else bar.style.background = `rgb(0,255,${Math.round((w-80)*12.75)})`;
+    bar.querySelector('span').textContent = w + '%';
+    w++;
+  },12);
+}
+
+function validatePhone(){
+  const num=document.getElementById('phoneInput').value.replace(/\s|-/g,'');
+  const res=document.getElementById('result');
+  res.textContent='';
+  if(!/^08\d{8,11}$/.test(num)){
+    typeWriter('STATUS : TIDAK VALID ❌',res);
+    animateAccuracyBar(40); 
+    return; 
+  }
+  const carrier=detectCarrier(num);
+  const text=`STATUS NOMOR : VALID ✅\nNOMOR       : ${num}\nOPERATOR    : ${carrier}\nJENIS HP    : Tidak dapat dideteksi (nomor saja)`;
+  typeWriter(text,res);
+  animateAccuracyBar(95);
+}
+
+async function checkIP(){
+  const ip=document.getElementById('ipInput').value.trim();
+  const res=document.getElementById('result'); 
+  res.textContent='Loading...';
+  if(!ip) return alert('Masukkan IP!');
+  try{
+    const r=await fetch(`https://ipapi.co/${ip}/json/`);
+    const d=await r.json();
+    res.textContent=`IP: ${d.ip}\nNegara: ${d.country_name}\nKota: ${d.city}\nISP: ${d.org}`;
+    addMarker(d.latitude,d.longitude,'IP Location');
+    map.setView([d.latitude,d.longitude],6);
+    animateAccuracyBar(90);
+  }catch(e){res.textContent='Gagal ambil data IP'; animateAccuracyBar(0);}
+}
+
+function addMarker(lat,lon,text){
+  if(markers.length>0){markers.forEach(m=>map.removeLayer(m)); markers=[];}
+  const m=L.marker([lat,lon]).addTo(map).bindPopup(text).openPopup();
+  markers.push(m);
+}
+</script>
+</body>
+</html>
